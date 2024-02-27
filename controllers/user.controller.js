@@ -20,8 +20,12 @@ const handleFollow = catchAsyncError(async (req, res, next) => {
         $push: { following: followedId },
     });
     await User.findByIdAndUpdate(followedId, {
-        $push: { followers: followerId },
+        $push: {
+            followers: followerId,
+            notifications: followerId,
+        },
     });
+
     return res.status(200).json({ success: true });
 });
 
@@ -40,7 +44,10 @@ const handleUnfollow = catchAsyncError(async (req, res, next) => {
         $pull: { following: followedId },
     });
     await User.findByIdAndUpdate(followedId, {
-        $pull: { followers: followerId },
+        $pull: {
+            followers: followerId,
+            notifications: { followerId },
+        },
     });
     return res.status(200).json({ success: true });
 });
@@ -70,6 +77,15 @@ const handleGetUserProfile = catchAsyncError(async (req, res, next) => {
         return next(new ErrorHandler('User not found', 400));
     }
 
+    return res.status(200).json({ success: true, user });
+});
+
+const handleGetUserNotifications = catchAsyncError(async (req, res, next) => {
+    const userId = req.params.userId;
+    const user = await User.findById(userId).populate('notifications'); // .populate('posts') will do later...
+    if (!user) {
+        return next(new ErrorHandler('User not found', 400));
+    }
     return res.status(200).json({ success: true, user });
 });
 
@@ -112,4 +128,5 @@ export {
     handleUnfollow,
     handleGetUserProfile,
     handleUpdateUserProfile,
+    handleGetUserNotifications,
 };

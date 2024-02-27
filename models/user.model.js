@@ -50,6 +50,12 @@ const schema = new mongoose.Schema(
                 ref: 'Post',
             },
         ],
+        notifications: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+            },
+        ],
         resetPasswordToken: String,
         resetPasswordExpire: String,
     },
