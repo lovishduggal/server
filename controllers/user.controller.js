@@ -2,6 +2,7 @@ import { catchAsyncError } from '../middlewares/catchAsyncError.js';
 import { User } from '../models/user.model.js';
 import ErrorHandler from '../utils/customErrorClass.js';
 import * as cloudinary from 'cloudinary';
+import mongoose from 'mongoose';
 
 const handleFollow = catchAsyncError(async (req, res, next) => {
     const follower = req.user; // Current user.
@@ -22,7 +23,10 @@ const handleFollow = catchAsyncError(async (req, res, next) => {
     await User.findByIdAndUpdate(followedId, {
         $push: {
             followers: followerId,
-            notifications: followerId,
+            notifications: {
+                user: followerId,
+                action: 'started following you',
+            },
         },
     });
 
@@ -46,7 +50,9 @@ const handleUnfollow = catchAsyncError(async (req, res, next) => {
     await User.findByIdAndUpdate(followedId, {
         $pull: {
             followers: followerId,
-            notifications: { followerId },
+            notifications: {
+                user: followerId,
+            },
         },
     });
     return res.status(200).json({ success: true });
@@ -54,7 +60,7 @@ const handleUnfollow = catchAsyncError(async (req, res, next) => {
 
 const handleGetUserProfile = catchAsyncError(async (req, res, next) => {
     const userId = req.params.userId;
-    const user = await User.findById(userId)
+    let user = await User.findById(userId)
         .populate({
             path: 'posts',
             options: {
@@ -73,6 +79,11 @@ const handleGetUserProfile = catchAsyncError(async (req, res, next) => {
         })
         .populate('followers')
         .populate('following'); // .populate('posts') will do later...
+
+    user.notifications = user?.notifications?.filter(
+        (notification) => !notification.saw === true
+    );
+
     if (!user) {
         return next(new ErrorHandler('User not found', 400));
     }
@@ -80,13 +91,29 @@ const handleGetUserProfile = catchAsyncError(async (req, res, next) => {
     return res.status(200).json({ success: true, user });
 });
 
+const handleGetAllUsers = catchAsyncError(async (req, res, next) => {
+    const users = await User.find();
+    return res.status(200).json({ success: true, users });
+});
+
 const handleGetUserNotifications = catchAsyncError(async (req, res, next) => {
     const userId = req.params.userId;
-    const user = await User.findById(userId).populate('notifications'); // .populate('posts') will do later...
+    let user = await User.findOneAndUpdate(
+        { _id: userId, 'notifications.saw': false },
+        {
+            $set: {
+                'notifications.$.saw': true,
+            },
+        }
+    ).populate('notifications.user');
+
     if (!user) {
-        return next(new ErrorHandler('User not found', 400));
+        //* It means no notification so we have to show all saw notification on the frontend
+        user = await User.findById(userId).populate('notifications.user');
     }
-    return res.status(200).json({ success: true, user });
+    return res
+        .status(200)
+        .json({ success: true, notifications: user.notifications.reverse() });
 });
 
 const handleUpdateUserProfile = catchAsyncError(async (req, res, next) => {
@@ -129,4 +156,5 @@ export {
     handleGetUserProfile,
     handleUpdateUserProfile,
     handleGetUserNotifications,
+    handleGetAllUsers,
 };

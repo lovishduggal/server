@@ -52,8 +52,17 @@ const schema = new mongoose.Schema(
         ],
         notifications: [
             {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                },
+                action: {
+                    type: String,
+                },
+                saw: {
+                    type: Boolean,
+                    default: false,
+                },
             },
         ],
         resetPasswordToken: String,
