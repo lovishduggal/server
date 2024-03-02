@@ -56,9 +56,13 @@ const handleLogout = catchAsyncError(async (req, res, next) => {
 });
 
 const handleCheck = catchAsyncError(async (req, res, next) => {
-    const user = req.user;
+    const jwt = req.cookies.jwt;
+    const userId = req.user._id;
     return res.status(200).json({
         success: true,
+        jwt,
+        userId,
+        message: 'Already LoggedIn',
     });
 });
 

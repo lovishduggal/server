@@ -146,6 +146,10 @@ const handleUpdateUserProfile = catchAsyncError(async (req, res, next) => {
 
     await user.save();
 
+    user.notifications = user?.notifications?.filter(
+        (notification) => !notification.saw === true
+    );
+
     return res
         .status(200)
         .json({ success: true, message: 'Profile updated successfully', user });
