@@ -131,9 +131,9 @@ const handleUpdateUserProfile = catchAsyncError(async (req, res, next) => {
 
     if (name) user.fullName = name;
     if (email) user.email = email;
-    if (bio) user.bio = bio;
-    if (website) user.website = website;
-    if (interests) user.interests = interests;
+    if (bio || bio === '') user.bio = bio;
+    if (website || website === '') user.website = website;
+    if (interests || interests === '') user.interests = interests;
 
     if (user.profilePicture.public_id && user.profilePicture.url)
         await cloudinary.v2.uploader.destroy(user.profilePicture.public_id, {
