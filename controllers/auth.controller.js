@@ -40,7 +40,6 @@ const handleLogin = catchAsyncError(async (req, res, next) => {
     return res.status(200).cookie('jwt', token, options).json({
         success: true,
         message: 'Logged In Successfully',
-        jwt: token,
         userId: user._id,
     });
 });
@@ -56,11 +55,9 @@ const handleLogout = catchAsyncError(async (req, res, next) => {
 });
 
 const handleCheck = catchAsyncError(async (req, res, next) => {
-    const jwt = req.cookies.jwt;
     const userId = req.user._id;
     return res.status(200).json({
         success: true,
-        jwt,
         userId,
         message: 'Already LoggedIn',
     });
